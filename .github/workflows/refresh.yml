@@ -19,6 +19,9 @@ permissions:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: awares
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4

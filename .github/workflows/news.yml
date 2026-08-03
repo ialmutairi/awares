@@ -19,6 +19,9 @@ permissions:
 jobs:
   news:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: awares
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4

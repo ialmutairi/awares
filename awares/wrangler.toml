@@ -16,10 +16,9 @@ main = "worker/index.js"
 compatibility_date = "2026-01-01"
 
 # قاعدة البيانات: المصادر المقترحة والتقييمات
-# استبدل id بالمعرّف الذي يطبعه أمر kv namespace create
 [[kv_namespaces]]
 binding = "AWARES_KV"
-id = "ضع_المعرّف_هنا"
+id = "e229196fc7294e0faa7957ba88010cbe"
 
 [vars]
 # الأصول المسموح لها بالنداء — ضيّقها على نطاقك قبل الإطلاق.
