@@ -208,6 +208,11 @@ Create project → Connect to Git → اختر المستودع
 
 الخادم في `worker/index.js` وقاعدة البيانات **Cloudflare KV**. الخطة المجانية: ١٠٠ ألف طلب يومياً للـ Worker، و١٠٠ ألف قراءة + ألف كتابة يومياً لـ KV. **بلا بطاقة ائتمانية.**
 
+> **إن ظهر `Wrangler requires at least Node.js v22`:** شغّل `npm install` أولاً.
+> المشروع يثبّت `wrangler@3` الذي يعمل على Node 20؛ وبدون التثبيت يسحب `npx`
+> الإصدار الأحدث من الشبكة وهو يطلب Node 22. للتأكد: `npx wrangler --version`
+> يجب أن يطبع `3.x`. (أو بدّل الإصدار: `nvm use 22`.)
+
 ```bash
 # ١) تسجيل الدخول (يفتح المتصفح)
 npx wrangler login

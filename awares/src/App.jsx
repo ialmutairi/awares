@@ -14,6 +14,10 @@ import { apiUrl, asset } from "./backend.js";
       صفر استدعاءات، صفر تكلفة.
    ============================================================ */
 
+/* تواصل المطوّر — يظهر أسفل قسم الدعم */
+const WHATSAPP = "966566097925";
+const LINKEDIN = "https://sa.linkedin.com/in/imtnan-almutairi-452624217";
+
 /* صور الرموز في public/qr/ — يفضّل مربّعة بخلفية بيضاء */
 const BANKS = [
   { id: "stc", name: "stc bank", qr: asset("/qr/stc.jpeg"), dot: "#4f008c" },
@@ -55,6 +59,43 @@ const STYLES = `
 .aw-word { font-family: 'Noto Kufi Arabic', sans-serif; font-weight: 800; font-size: 21px; color: var(--navy); line-height: 1; direction: ltr; unicode-bidi: isolate; }
 .aw-word span { color: var(--teal); }
 .aw-tag { font-size: 12.5px; color: var(--ink-faint); }
+
+/* ---------- شريط التقييم تحت الترويسة ---------- */
+.aw-ticker {
+  background: var(--navy); color: #fff;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+  overflow: hidden;
+}
+.aw-ticker-in { display: flex; align-items: stretch; max-width: 880px; margin: 0 auto; }
+.aw-ticker-score {
+  display: flex; align-items: center; gap: 7px; flex-shrink: 0;
+  padding: 8px 20px 8px 16px; background: rgba(255,255,255,.09);
+  font-size: 12.5px; white-space: nowrap;
+}
+.aw-ticker-score b { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; color: var(--teal); }
+.aw-ticker-score span { opacity: .75; font-size: 11.5px; }
+
+.aw-ticker-win { flex: 1; overflow: hidden; position: relative; display: flex; align-items: center; }
+/* المسار يُكرَّر مرتين ليبدو الدوران متصلاً بلا قفزة */
+.aw-ticker-track {
+  display: flex; gap: 30px; white-space: nowrap; padding-inline-start: 22px;
+  animation: awtick 46s linear infinite; will-change: transform;
+}
+.aw-ticker:hover .aw-ticker-track { animation-play-state: paused; }
+@keyframes awtick { from { transform: translateX(0); } to { transform: translateX(50%); } }
+@media (prefers-reduced-motion: reduce) {
+  .aw-ticker-track { animation: none; }
+  .aw-ticker-win { overflow-x: auto; }
+}
+.aw-tick {
+  display: inline-flex; align-items: baseline; gap: 8px;
+  font-size: 12.5px; opacity: .92; padding: 8px 0;
+}
+.aw-tick-r {
+  font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 600;
+  padding: 1px 7px; border-radius: 100px; background: rgba(255,255,255,.16); flex-shrink: 0;
+}
+.aw-tick-s { opacity: .6; font-size: 11px; }
 
 /* ---------- tabs ---------- */
 .aw-tabs { display: flex; gap: 0; margin: 22px 0 20px; border-bottom: 1px solid var(--rule); }
@@ -553,6 +594,20 @@ const STYLES = `
 }
 .aw-credit-logo { height: 46px; width: auto; object-fit: contain; display: block; flex-shrink: 0; }
 .aw-credit b { font-family: 'Noto Kufi Arabic', sans-serif; font-weight: 600; color: var(--navy); }
+.aw-credit-who { display: flex; flex-direction: column; gap: 7px; }
+
+.aw-links { display: flex; gap: 7px; flex-wrap: wrap; }
+.aw-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: inherit; font-size: 12.5px; text-decoration: none;
+  padding: 6px 13px; border: 1px solid var(--rule); border-radius: 100px;
+  color: var(--ink-soft); background: var(--surface);
+  transition: border-color .12s, color .12s, background .12s;
+}
+.aw-link:hover { border-color: currentColor; }
+.aw-link[data-net="wa"]:hover { color: #128c7e; background: #f0faf7; }
+.aw-link[data-net="li"]:hover { color: #0a66c2; background: #eff6fc; }
+.aw-link svg { width: 14px; height: 14px; flex-shrink: 0; }
 
 .aw-legal {
   margin-top: 14px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.75;
@@ -639,6 +694,8 @@ export default function Awares() {
           <div className="aw-tag">الوعي والامتثال التنظيمي للمنشآت السعودية — مجاناً</div>
         </div>
       </header>
+
+      <Ticker />
 
       <main className="aw-wrap">
         <div className="aw-tabs" role="tablist">
@@ -1270,6 +1327,51 @@ function AddSource({ sectorId }) {
   );
 }
 
+/* ---------- شريط التقييم تحت الترويسة ----------
+   يظهر في كل التبويبات: المتوسط العام ثم رسائل الناس تمرّ أفقياً.
+   لا يظهر أصلاً إن لم يوجد تقييم — شريط فارغ أسوأ من لا شريط. */
+function Ticker() {
+  const [fb, setFb] = useState(null);
+
+  useEffect(() => {
+    fetch(apiUrl("/api/feedback"))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => setFb(j ? { ...j.feedback, notes: j.notes || [] } : null))
+      .catch(() => setFb(null));
+  }, []);
+
+  if (!fb?.count) return null;
+
+  const notes = fb.notes || [];
+  // نكرّر المسار مرتين حتى يعود الدوران من حيث بدأ بلا قفزة مرئية
+  const loop = notes.length ? [...notes, ...notes] : [];
+
+  return (
+    <div className="aw-ticker">
+      <div className="aw-ticker-in">
+        <div className="aw-ticker-score">
+          تقييم المستخدمين <b>{fb.average}/5</b>
+          <span>({fb.count})</span>
+        </div>
+
+        {loop.length > 0 && (
+          <div className="aw-ticker-win">
+            <div className="aw-ticker-track">
+              {loop.map((n, i) => (
+                <span className="aw-tick" key={i}>
+                  <span className="aw-tick-r aw-num">{n.rating}/5</span>
+                  {n.note}
+                  {n.sector && <span className="aw-tick-s">— {n.sector}</span>}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ---------- شريط رسائل الناس — عام ----------
    ملاحظات المستخدمين تُعرض كما كُتبت بعد تنظيف بسيط على الخادم
    (حذف الروابط وأرقام التواصل ووسوم HTML). ليست فلترة محتوى كاملة —
@@ -1539,7 +1641,35 @@ function Support() {
 
       <div className="aw-credit">
         <img className="aw-credit-logo" src={asset("/logo.png")} alt="awares — الوعي والامتثال التنظيمي" />
-        <span>تطوير <b>امتنان المطيري</b></span>
+        <div className="aw-credit-who">
+          <span>تطوير <b>امتنان المطيري</b></span>
+          <div className="aw-links">
+            <a
+              className="aw-link"
+              data-net="wa"
+              href={`https://wa.me/${WHATSAPP}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12.04 2c-5.46 0-9.9 4.44-9.9 9.9 0 1.75.46 3.45 1.32 4.95L2 22l5.28-1.38a9.86 9.86 0 004.76 1.21h.01c5.46 0 9.9-4.44 9.9-9.9 0-2.64-1.03-5.13-2.9-7A9.82 9.82 0 0012.04 2zm0 18.05h-.01a8.2 8.2 0 01-4.18-1.15l-.3-.18-3.11.82.83-3.04-.2-.31a8.2 8.2 0 01-1.26-4.39c0-4.54 3.7-8.23 8.24-8.23a8.2 8.2 0 015.82 2.41 8.18 8.18 0 012.41 5.83c0 4.54-3.7 8.24-8.24 8.24zm4.52-6.17c-.25-.13-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.79.97-.14.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.13-.15.17-.25.25-.41.08-.17.04-.31-.02-.44-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.87.86-.87 2.09s.9 2.43 1.02 2.6c.12.16 1.75 2.67 4.25 3.75.59.26 1.06.41 1.42.52.6.19 1.14.16 1.57.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.08.14-1.18-.06-.11-.22-.17-.47-.29z" />
+              </svg>
+              واتساب
+            </a>
+            <a
+              className="aw-link"
+              data-net="li"
+              href={LINKEDIN}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 110-4.13 2.06 2.06 0 010 4.13zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z" />
+              </svg>
+              لينكدإن
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
