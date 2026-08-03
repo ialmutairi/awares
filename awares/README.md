@@ -202,12 +202,42 @@ Create project → Connect to Git → اختر المستودع
 
 السبب: التحليل يحتاج مفاتيح Grok/Gemini، ومفتاح في المتصفح مفتاح مسروق. لا مفرّ من خادم يحملها.
 
-**الحل المجاني:** انشر الواجهة على Pages، وضع `/api` في **Cloudflare Worker** منفصل (مجاني، بلا بطاقة)، ثم اضبط في المستودع → Settings → Variables:
+**الحل المجاني:** انشر الواجهة على Pages، وضع `/api` في **Cloudflare Worker** منفصل (مجاني، بلا بطاقة).
 
+### ربط الخادم وقاعدة البيانات — خمس خطوات
+
+الخادم في `worker/index.js` وقاعدة البيانات **Cloudflare KV**. الخطة المجانية: ١٠٠ ألف طلب يومياً للـ Worker، و١٠٠ ألف قراءة + ألف كتابة يومياً لـ KV. **بلا بطاقة ائتمانية.**
+
+```bash
+# ١) تسجيل الدخول (يفتح المتصفح)
+npx wrangler login
+
+# ٢) أنشئ قاعدة البيانات
+npm run kv:create
+#    ← انسخ المعرّف الناتج وضعه في wrangler.toml مكان "ضع_المعرّف_هنا"
+
+# ٣) أضف المفاتيح كأسرار (لا تُكتب في أي ملف)
+npx wrangler secret put XAI_API_KEY
+npx wrangler secret put GEMINI_API_KEY
+
+# ٤) انشر الخادم
+npm run deploy:api
+#    ← يطبع العنوان: https://awares-api.<حسابك>.workers.dev
+
+# ٥) اربط الواجهة به
+#    المستودع → Settings → Secrets and variables → Actions → Variables:
+#      VITE_BASE     = /awares/
+#      VITE_API_BASE = https://awares-api.<حسابك>.workers.dev
 ```
-VITE_BASE      = /<اسم-المستودع>/
-VITE_API_BASE  = https://<worker>.workers.dev
+
+تجربة محلية قبل النشر:
+
+```bash
+npm run dev:api          # الخادم على 8788 بـ KV محلية
+curl localhost:8788/     # يجب أن يعيد providers و kv:true
 ```
+
+**قبل الإطلاق:** ضيّق `ALLOWED_ORIGINS` في `wrangler.toml` على نطاقك، فهو الآن مفتوح للجميع.
 
 `.github/workflows/pages.yml` جاهز، ويفشل البناء إن تسرّب مفتاح إلى الحزمة.
 

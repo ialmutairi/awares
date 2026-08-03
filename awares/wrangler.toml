@@ -1,0 +1,35 @@
+# awares — إعداد خادم /api على Cloudflare Workers
+#
+# الخطة المجانية تكفي: ١٠٠ ألف طلب يومياً للـ Worker،
+# و١٠٠ ألف قراءة + ألف كتابة يومياً لـ KV. بلا بطاقة ائتمانية.
+#
+# الإعداد لمرة واحدة (انظر README):
+#   npx wrangler@3 login
+#   npx wrangler@3 kv namespace create AWARES_KV
+#   ← ضع المعرّف الناتج في id أدناه
+#   npx wrangler@3 secret put XAI_API_KEY
+#   npx wrangler@3 secret put GEMINI_API_KEY
+#   npm run deploy:api
+
+name = "awares-api"
+main = "worker/index.js"
+compatibility_date = "2026-01-01"
+
+# قاعدة البيانات: المصادر المقترحة والتقييمات
+# استبدل id بالمعرّف الذي يطبعه أمر kv namespace create
+[[kv_namespaces]]
+binding = "AWARES_KV"
+id = "ضع_المعرّف_هنا"
+
+[vars]
+# الأصول المسموح لها بالنداء — ضيّقها على نطاقك قبل الإطلاق.
+# فارغة = الجميع، وهذا مناسب للتجربة فقط.
+ALLOWED_ORIGINS = ""
+
+# عنوان الموقع الثابت، ليقرأ الخادم منه بيانات القطاعات كسياق (اختياري)
+SITE_ORIGIN = ""
+
+# المفاتيح أسرار لا vars — تُضاف بـ wrangler secret put ولا تُكتب هنا أبداً:
+#   XAI_API_KEY
+#   GEMINI_API_KEY
+#   ANTHROPIC_API_KEY

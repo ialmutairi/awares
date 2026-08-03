@@ -11,7 +11,10 @@
     "test": "node test.mjs",
     "eval": "node eval.mjs",
     "verify": "node verify-regulators.mjs",
-    "news": "node news.mjs"
+    "news": "node news.mjs",
+    "dev:api": "wrangler dev --port 8788",
+    "deploy:api": "wrangler deploy",
+    "kv:create": "wrangler kv namespace create AWARES_KV"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -19,6 +22,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "wrangler": "^3.114.17"
   }
 }

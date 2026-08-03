@@ -2,3 +2,7 @@ node_modules
 dist
 .env
 .DS_Store
+
+# Cloudflare
+.wrangler
+.dev.vars
