@@ -1,0 +1,76 @@
+{
+  "generatedAt": "2026-08-03T20:07:11.087Z",
+  "profiles": 5,
+  "items": 20,
+  "metrics": {
+    "sourceOfficial": 100,
+    "sourceAlive": 95,
+    "penaltyNamed": 55,
+    "plainLanguage": 100,
+    "appliesLinked": 100,
+    "flaggedSource": 5
+  },
+  "byProfile": [
+    {
+      "id": "coffee",
+      "label": "مقهى وتحميص",
+      "items": 3,
+      "cached": false,
+      "sourceOfficial": 100,
+      "sourceAlive": 100,
+      "penaltyNamed": 33,
+      "plainLanguage": 100,
+      "appliesLinked": 100,
+      "flaggedSource": 0
+    },
+    {
+      "id": "saas",
+      "label": "منصة برمجية",
+      "items": 3,
+      "cached": false,
+      "sourceOfficial": 100,
+      "sourceAlive": 100,
+      "penaltyNamed": 67,
+      "plainLanguage": 100,
+      "appliesLinked": 100,
+      "flaggedSource": 0
+    },
+    {
+      "id": "clinic",
+      "label": "عيادة أسنان",
+      "items": 5,
+      "cached": false,
+      "sourceOfficial": 100,
+      "sourceAlive": 80,
+      "penaltyNamed": 40,
+      "plainLanguage": 100,
+      "appliesLinked": 100,
+      "flaggedSource": 20
+    },
+    {
+      "id": "broker",
+      "label": "وساطة عقارية",
+      "items": 5,
+      "cached": false,
+      "sourceOfficial": 100,
+      "sourceAlive": 100,
+      "penaltyNamed": 100,
+      "plainLanguage": 100,
+      "appliesLinked": 100,
+      "flaggedSource": 0
+    },
+    {
+      "id": "factory",
+      "label": "مصنع أغذية",
+      "items": 4,
+      "cached": false,
+      "sourceOfficial": 100,
+      "sourceAlive": 100,
+      "penaltyNamed": 25,
+      "plainLanguage": 100,
+      "appliesLinked": 100,
+      "flaggedSource": 0
+    }
+  ],
+  "caveat": "هذه المقاييس تقيس شكل المخرجات لا صحة أرقامها. أن يفتح الرابط لا يعني أن الغرامة المذكورة صحيحة — التحقق من المصدر الرسمي يبقى مسؤولية المستخدم."
+}

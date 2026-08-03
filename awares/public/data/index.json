@@ -1,0 +1,107 @@
+{
+  "updatedAt": "2026-08-03T19:13:26.212Z",
+  "sectors": [
+    {
+      "id": "contracting",
+      "name": "مقاولات وإنشاءات",
+      "count": 0,
+      "updatedAt": null
+    },
+    {
+      "id": "realestate-dev",
+      "name": "تطوير عقاري",
+      "count": 0,
+      "updatedAt": null
+    },
+    {
+      "id": "realestate-broker",
+      "name": "وساطة وإدارة أملاك",
+      "count": 0,
+      "updatedAt": null
+    },
+    {
+      "id": "food",
+      "name": "مطاعم ومقاهي",
+      "count": 21,
+      "updatedAt": "2026-08-03T19:13:26.207Z"
+    },
+    {
+      "id": "retail",
+      "name": "تجزئة ومحلات",
+      "count": 0,
+      "updatedAt": null
+    },
+    {
+      "id": "ecommerce",
+      "name": "تجارة إلكترونية",
+      "count": 0,
+      "updatedAt": null
+    },
+    {
+      "id": "software",
+      "name": "تقنية وبرمجيات",
+      "count": 0,
+      "updatedAt": null
+    },
+    {
+      "id": "healthtech",
+      "name": "التقنية الصحية",
+      "count": 0,
+      "updatedAt": null
+    },
+    {
+      "id": "clinics",
+      "name": "عيادات ومراكز صحية",
+      "count": 0,
+      "updatedAt": null
+    },
+    {
+      "id": "education",
+      "name": "تعليم وتدريب",
+      "count": 0,
+      "updatedAt": null
+    },
+    {
+      "id": "logistics",
+      "name": "نقل ولوجستيات",
+      "count": 0,
+      "updatedAt": null
+    },
+    {
+      "id": "tourism",
+      "name": "ضيافة وسياحة",
+      "count": 0,
+      "updatedAt": null
+    },
+    {
+      "id": "manufacturing",
+      "name": "صناعة وتصنيع",
+      "count": 0,
+      "updatedAt": null
+    },
+    {
+      "id": "fintech",
+      "name": "خدمات مالية وتقنية مالية",
+      "count": 0,
+      "updatedAt": null
+    },
+    {
+      "id": "professional",
+      "name": "خدمات مهنية",
+      "count": 0,
+      "updatedAt": null
+    },
+    {
+      "id": "beauty",
+      "name": "تجميل وصالونات",
+      "count": 0,
+      "updatedAt": null
+    },
+    {
+      "id": "media",
+      "name": "إعلام ومحتوى",
+      "count": 0,
+      "updatedAt": null
+    }
+  ]
+}

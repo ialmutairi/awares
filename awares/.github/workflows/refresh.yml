@@ -1,0 +1,48 @@
+name: تحديث البيانات التنظيمية
+
+on:
+  schedule:
+    - cron: "0 3 * * 0"      # كل أحد ٣ صباحاً UTC (٦ صباحاً بتوقيت الرياض)
+  workflow_dispatch:          # تشغيل يدوي من تبويب Actions
+    inputs:
+      sector:
+        description: "معرّف قطاع واحد (اتركه فارغاً لكل القطاعات)"
+        required: false
+      solo:
+        description: "مزود واحد فقط — أسرع وأرخص، بلا تحقق متقاطع"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: توليد البيانات
+        env:
+          # يكفي مفتاح واحد. وجود أكثر من مفتاح يفعّل التحقق المتقاطع.
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          node refresh.mjs \
+            ${{ github.event.inputs.solo == 'true' && '--solo' || '' }} \
+            ${{ github.event.inputs.sector }}
+
+      - name: حفظ التحديث
+        run: |
+          git config user.name  "awares-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add public/data
+          git diff --staged --quiet && echo "لا جديد" && exit 0
+          git commit -m "تحديث تنظيمي — $(date -u +%Y-%m-%d)"
+          git push
