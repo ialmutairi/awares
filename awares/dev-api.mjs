@@ -8,6 +8,7 @@
 import { readFile } from "node:fs/promises";
 import {
   handleIntake, handleAnalyze, handleSubmitSource, handleListSources,
+  handleSubmitRegulator, handleListRegulators,
   handleFeedback, handleStats, respond, providersConfigured,
 } from "./api-core.mjs";
 
@@ -59,6 +60,8 @@ export function devApi(env) {
           const q = new URL(req.url, "http://x").searchParams;
           if (path === "/api/sources")
             return send(await respond(() => handleListSources(env, q.get("sector") || "")));
+          if (path === "/api/regulators")
+            return send(await respond(() => handleListRegulators(env, q.get("sector") || "")));
           if (path === "/api/feedback") return send(await respond(() => handleStats(env)));
         }
 
@@ -76,6 +79,7 @@ export function devApi(env) {
         if (path === "/api/analyze")
           return send(await respond(() => handleAnalyze(body, env, loadSector)));
         if (path === "/api/sources") return send(await respond(() => handleSubmitSource(body, env)));
+        if (path === "/api/regulators") return send(await respond(() => handleSubmitRegulator(body, env)));
         if (path === "/api/feedback") return send(await respond(() => handleFeedback(body, env)));
 
         return send({

@@ -13,6 +13,7 @@
 
 import {
   handleIntake, handleAnalyze, handleSubmitSource, handleListSources,
+  handleSubmitRegulator, handleListRegulators,
   handleFeedback, handleStats, respond, providersConfigured,
 } from "../api-core.mjs";
 
@@ -84,6 +85,8 @@ export default {
       }
       if (path === "/api/sources")
         out = await respond(() => handleListSources(env, url.searchParams.get("sector") || ""));
+      else if (path === "/api/regulators")
+        out = await respond(() => handleListRegulators(env, url.searchParams.get("sector") || ""));
       else if (path === "/api/feedback") out = await respond(() => handleStats(env));
     } else if (request.method === "POST") {
       if (path === "/api/intake") out = await respond(async () => handleIntake(await body(), env));
@@ -91,6 +94,8 @@ export default {
         out = await respond(async () => handleAnalyze(await body(), env, loadSector));
       else if (path === "/api/sources")
         out = await respond(async () => handleSubmitSource(await body(), env));
+      else if (path === "/api/regulators")
+        out = await respond(async () => handleSubmitRegulator(await body(), env));
       else if (path === "/api/feedback")
         out = await respond(async () => handleFeedback(await body(), env));
     }

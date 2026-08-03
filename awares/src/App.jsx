@@ -471,6 +471,14 @@ const STYLES = `
 /* ---------- اقتراح مصدر ---------- */
 .aw-add { margin-top: 13px; padding-top: 13px; border-top: 1px dashed var(--rule); }
 .aw-add-t { font-size: 12px; color: var(--ink-faint); margin-bottom: 8px; }
+.aw-add-kind { display: flex; gap: 5px; margin-bottom: 9px; }
+.aw-kind {
+  font-family: inherit; font-size: 12px; padding: 5px 13px;
+  border: 1px solid var(--rule); border-radius: 100px;
+  background: var(--surface); color: var(--ink-faint); cursor: pointer;
+}
+.aw-kind:hover { border-color: var(--ink-faint); }
+.aw-kind[data-on="true"] { background: var(--navy); border-color: var(--navy); color: #fff; font-weight: 600; }
 .aw-add-row { display: flex; gap: 6px; flex-wrap: wrap; }
 .aw-add-in {
   flex: 1; min-width: 210px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;
@@ -1361,25 +1369,39 @@ function News() {
    للنموذج كمرجع. الترقية تحتاج مراجعة بشرية — وإلا صار أي مجهول قادراً
    على حقن مرجع في أداة امتثال. */
 function AddSource({ sectorId }) {
+  const [kind, setKind] = useState("source");   // مستند | جهة
   const [url, setUrl] = useState("");
+  const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
-  const [list, setList] = useState([]);
+  const [sources, setSources] = useState([]);
+  const [regs, setRegs] = useState([]);
 
   useEffect(() => {
-    fetch(apiUrl(`/api/sources?sector=${encodeURIComponent(sectorId)}`))
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => setList(j?.sources || []))
-      .catch(() => setList([]));
+    const q = encodeURIComponent(sectorId);
+    fetch(apiUrl(`/api/sources?sector=${q}`))
+      .then((r) => (r.ok ? r.json() : null)).then((j) => setSources(j?.sources || [])).catch(() => {});
+    fetch(apiUrl(`/api/regulators?sector=${q}`))
+      .then((r) => (r.ok ? r.json() : null)).then((j) => setRegs(j?.regulators || [])).catch(() => {});
   }, [sectorId]);
+
+  const isReg = kind === "regulator";
+  const ready = url.trim().length >= 12 && (!isReg || name.trim().length >= 4);
 
   const send = async () => {
     setBusy(true);
     setMsg(null);
     try {
-      const r = await postJSON("/api/sources", { sectorId, url: url.trim() });
-      setMsg({ ok: true, text: r.hint || `أُضيف مصدر من «${r.source.host}» — بانتظار المراجعة.` });
-      setList((l) => [r.source, ...l]);
+      if (isReg) {
+        const r = await postJSON("/api/regulators", { sectorId, url: url.trim(), name: name.trim() });
+        setMsg({ ok: true, text: r.hint || `أُضيفت «${r.regulator.name}» — بانتظار المراجعة.` });
+        setRegs((l) => [r.regulator, ...l]);
+        setName("");
+      } else {
+        const r = await postJSON("/api/sources", { sectorId, url: url.trim() });
+        setMsg({ ok: true, text: r.hint || `أُضيف مصدر من «${r.source.host}» — بانتظار المراجعة.` });
+        setSources((l) => [r.source, ...l]);
+      }
       setUrl("");
     } catch (e) {
       setMsg({ ok: false, text: e.message });
@@ -1390,34 +1412,71 @@ function AddSource({ sectorId }) {
 
   return (
     <div className="aw-add">
-      {list.length > 0 && (
+      {(regs.length > 0 || sources.length > 0) && (
         <div style={{ marginBottom: 11 }}>
-          {list.map((s) => (
+          {regs.map((r) => (
+            <div className="aw-sug" key={r.id}>
+              <a className="aw-src" href={r.url} target="_blank" rel="noopener noreferrer">{r.name}</a>
+              <span className="aw-num" style={{ fontSize: 11, color: "var(--teal)" }}>{r.host}</span>
+              <span className="aw-sug-tag">جهة مقترحة — غير مراجَعة</span>
+            </div>
+          ))}
+          {sources.map((s) => (
             <div className="aw-sug" key={s.id}>
               <a className="aw-src" href={s.url} target="_blank" rel="noopener noreferrer">
                 {s.regulator || s.host}
               </a>
-              <span className="aw-sug-tag">مقترح — غير مراجَع</span>
+              <span className="aw-sug-tag">مستند مقترح — غير مراجَع</span>
             </div>
           ))}
         </div>
       )}
 
-      <div className="aw-add-t">
-        تعرف مصدراً رسمياً ينقصنا؟ نقبل روابط الجهات الرسمية فقط، ونتحقق أن الرابط يفتح.
+      {/* النوع يغيّر قواعد القبول: الجهة تُقبل بصفحتها الرئيسية، والمستند لا */}
+      <div className="aw-add-kind">
+        {[["source", "مستند"], ["regulator", "جهة رقابية"]].map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            className="aw-kind"
+            data-on={kind === k}
+            onClick={() => { setKind(k); setMsg(null); }}
+          >
+            {label}
+          </button>
+        ))}
       </div>
+
+      <div className="aw-add-t">
+        {isReg
+          ? "جهة رقابية ينقصنا رصدها؟ ضع اسمها الرسمي ورابط موقعها. نقبل النطاقات السعودية الرسمية فقط."
+          : "تعرف مستنداً رسمياً ينقصنا؟ رابط النظام أو اللائحة أو جدول المخالفات — لا الصفحة الرئيسية."}
+      </div>
+
+      {isReg && (
+        <input
+          className="aw-in"
+          style={{ marginBottom: 6 }}
+          value={name}
+          maxLength={160}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="اسم الجهة الرسمي — مثال: الهيئة السعودية للمياه"
+          aria-label="اسم الجهة"
+        />
+      )}
+
       <div className="aw-add-row">
         <input
           className="aw-add-in"
           value={url}
           maxLength={500}
           onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && url.trim() && !busy && send()}
-          placeholder="https://sfda.gov.sa/ar/regulations/..."
-          aria-label="رابط المصدر"
+          onKeyDown={(e) => e.key === "Enter" && ready && !busy && send()}
+          placeholder={isReg ? "https://swa.gov.sa" : "https://sfda.gov.sa/ar/regulations/..."}
+          aria-label="الرابط"
           dir="ltr"
         />
-        <button className="aw-add-btn" onClick={send} disabled={busy || url.trim().length < 12}>
+        <button className="aw-add-btn" onClick={send} disabled={busy || !ready}>
           {busy ? "يتحقق…" : "اقترح"}
         </button>
       </div>

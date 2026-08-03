@@ -11,9 +11,10 @@
 import { SECTORS } from "./sectors.mjs";
 import { runFirstAvailable, availableProviders } from "./providers.mjs";
 import { withCache, TTL } from "./cache.mjs";
-import { validateSource, sectorHint, SourceRejected } from "./sources.mjs";
+import { validateSource, validateRegulator, sectorHint, SourceRejected } from "./sources.mjs";
 import {
   putSource, listSources, sourceExists,
+  putRegulator, listRegulators, regulatorExists,
   putFeedback, feedbackSummary, recentNotes, storeKind,
 } from "./store.mjs";
 import {
@@ -206,6 +207,55 @@ export async function handleSubmitSource(body, env) {
   await putSource(env, rec);
 
   return { ok: true, source: rec, hint: sectorHint(sectorId, checked.host) };
+}
+
+export async function handleSubmitRegulator(body, env) {
+  const sectorId = String(body?.sectorId || "").trim();
+  if (!SECTORS.some((s) => s.id === sectorId)) {
+    throw new ApiError(400, "اختر قطاعاً صحيحاً.");
+  }
+
+  let checked;
+  try {
+    checked = await validateRegulator(body?.url, { name: body?.name, scope: body?.scope });
+  } catch (e) {
+    if (e instanceof SourceRejected) throw new ApiError(400, e.message);
+    throw e;
+  }
+
+  if (await regulatorExists(env, checked.host)) {
+    throw new ApiError(409, `جهة على «${checked.host}» مقترحة بالفعل.`);
+  }
+
+  const rec = {
+    id: newId(),
+    sectorId,
+    name: checked.name,
+    url: checked.url,
+    host: checked.host,
+    scope: checked.scope,
+    at: new Date().toISOString(),
+    status: "pending",
+    needsReview: checked.needsReview,
+  };
+  await putRegulator(env, rec);
+
+  return {
+    ok: true,
+    regulator: rec,
+    hint: checked.needsReview
+      ? `نطاق «${checked.host}» ليس gov.sa — سنتحقق منه يدوياً قبل اعتماده.`
+      : null,
+  };
+}
+
+export async function handleListRegulators(env, sectorId) {
+  const rows = await listRegulators(env, sectorId);
+  return {
+    regulators: rows.map(({ id, sectorId: s, name, url, host, scope, at, status, needsReview }) => ({
+      id, sectorId: s, name, url, host, scope, at, status, needsReview,
+    })),
+  };
 }
 
 export async function handleListSources(env, sectorId) {
