@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { SECTORS } from "../sectors.mjs";
 import { REGULATORS, PRIMARY_SOURCES, regulatorsFor } from "../regulators.mjs";
+import { apiUrl, asset } from "./backend.js";
 
 /* ============================================================
    awares — الوعي والامتثال التنظيمي
@@ -15,8 +16,8 @@ import { REGULATORS, PRIMARY_SOURCES, regulatorsFor } from "../regulators.mjs";
 
 /* صور الرموز في public/qr/ — يفضّل مربّعة بخلفية بيضاء */
 const BANKS = [
-  { id: "stc", name: "stc bank", qr: "/qr/stc.jpeg", dot: "#4f008c" },
-  { id: "rajhi", name: "مصرف الراجحي", qr: "/qr/alrajhi.jpeg", dot: "#1f2ae0" },
+  { id: "stc", name: "stc bank", qr: asset("/qr/stc.jpeg"), dot: "#4f008c" },
+  { id: "rajhi", name: "مصرف الراجحي", qr: asset("/qr/alrajhi.jpeg"), dot: "#1f2ae0" },
 ];
 
 const STYLES = `
@@ -610,8 +611,8 @@ const ICONS = {
 const FALLBACK_ICON = <>{P("M4 5h16v14H4z")}{P("M8 9h8M8 13h5")}</>;
 
 /* ---------- أدوات ---------- */
-async function postJSON(url, body) {
-  const res = await fetch(url, {
+async function postJSON(path, body) {
+  const res = await fetch(apiUrl(path), {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
@@ -632,7 +633,7 @@ export default function Awares() {
       <header className="aw-top">
         <div className="aw-wrap aw-top-in">
           <div className="aw-brand">
-            <img className="aw-mark" src="/mark.png" alt="" width="34" height="34" />
+            <img className="aw-mark" src={asset("/mark.png")} alt="" width="34" height="34" />
             <span className="aw-word">awares<span>.</span></span>
           </div>
           <div className="aw-tag">الوعي والامتثال التنظيمي للمنشآت السعودية — مجاناً</div>
@@ -710,7 +711,7 @@ function Analyzer() {
   const panelRef = useRef(null);
 
   useEffect(() => {
-    fetch("/api/status")
+    fetch(apiUrl("/api/status"))
       .then((r) => (r.ok ? r.json() : { ready: false }))
       .then((j) => setReady(!!j.ready))
       .catch(() => setReady(false));
@@ -1121,7 +1122,7 @@ function News() {
   const [kind, setKind] = useState("all");
 
   useEffect(() => {
-    fetch("/data/news.json")
+    fetch(asset("/data/news.json"))
       .then((r) => (r.ok ? r.json() : null))
       .then(setData)
       .catch(() => setData(null));
@@ -1210,7 +1211,7 @@ function AddSource({ sectorId }) {
   const [list, setList] = useState([]);
 
   useEffect(() => {
-    fetch(`/api/sources?sector=${encodeURIComponent(sectorId)}`)
+    fetch(apiUrl(`/api/sources?sector=${encodeURIComponent(sectorId)}`))
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => setList(j?.sources || []))
       .catch(() => setList([]));
@@ -1411,11 +1412,11 @@ function Quality() {
   const [fb, setFb] = useState(null);
 
   useEffect(() => {
-    fetch("/data/quality.json")
+    fetch(asset("/data/quality.json"))
       .then((r) => (r.ok ? r.json() : null))
       .then(setQ)
       .catch(() => setQ(null));
-    fetch("/api/feedback")
+    fetch(apiUrl("/api/feedback"))
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => setFb(j ? { ...j.feedback, notes: j.notes || [] } : null))
       .catch(() => setFb(null));
@@ -1537,7 +1538,7 @@ function Support() {
       )}
 
       <div className="aw-credit">
-        <img className="aw-credit-logo" src="/logo.png" alt="awares — الوعي والامتثال التنظيمي" />
+        <img className="aw-credit-logo" src={asset("/logo.png")} alt="awares — الوعي والامتثال التنظيمي" />
         <span>تطوير <b>امتنان المطيري</b></span>
       </div>
     </div>

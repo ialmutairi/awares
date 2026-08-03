@@ -1,0 +1,71 @@
+name: نشر على GitHub Pages
+
+# ⚠️ GitHub Pages استضافة ثابتة لا تشغّل دوال خادم.
+# تبويبا «المستجدات» و«التغطية» يعملان كاملين هنا.
+# تبويب «حلّل منشأتي» يحتاج خادماً يحمل مفاتيح Grok/Gemini — ضع عنوان
+# الـ Worker في متغيّر المستودع VITE_API_BASE، وإلا اختفى التبويب تلقائياً.
+#
+# الإعداد لمرة واحدة:
+#   Settings → Pages → Source: GitHub Actions
+#   Settings → Secrets and variables → Actions → Variables:
+#     VITE_BASE      = /<اسم-المستودع>/      (أو / مع نطاق مخصص)
+#     VITE_API_BASE  = https://<worker>.workers.dev   (اختياري)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - name: اختبارات
+        run: npm test
+
+      - name: بناء
+        env:
+          VITE_BASE: ${{ vars.VITE_BASE || '/' }}
+          VITE_API_BASE: ${{ vars.VITE_API_BASE }}
+          VITE_FIREBASE_PROJECT: ${{ vars.VITE_FIREBASE_PROJECT }}
+          VITE_FIREBASE_KEY: ${{ vars.VITE_FIREBASE_KEY }}
+        run: npm run build
+
+      - name: تأكيد عدم تسريب المفاتيح
+        run: |
+          if grep -rqE "xai-[A-Za-z0-9]{20}|sk-ant-[A-Za-z0-9]{20}" dist/; then
+            echo "::error::مفتاح مزوّد تسرّب إلى حزمة المتصفح — أُوقف النشر"
+            exit 1
+          fi
+          echo "نظيف"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

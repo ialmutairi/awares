@@ -35,6 +35,14 @@ const FS = `https://firestore.googleapis.com/v1/projects/${FB_PROJECT}/databases
 
 export const apiUrl = (path) => `${API_BASE}${path}`;
 
+/**
+ * مسار أصل ثابت (صورة أو ملف JSON) بعد بادئة النشر.
+ * ضروري على GitHub Pages: الموقع يُخدم من /<المستودع>/ فالمسار المطلق
+ * "/logo.png" يشير لجذر النطاق ويعطي 404. BASE_URL يضبطه Vite وقت البناء.
+ */
+export const asset = (path) =>
+  `${(import.meta.env?.BASE_URL || "/").replace(/\/$/, "")}${path}`;
+
 export async function postJSON(path, body) {
   const res = await fetch(apiUrl(path), {
     method: "POST",

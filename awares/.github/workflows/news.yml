@@ -1,0 +1,47 @@
+name: رصد المستجدات التنظيمية
+
+# يولّد public/data/news.json ويدفعه. الواجهة تقرأه كملف ثابت،
+# فتكلفة العرض صفر مهما بلغ عدد الزوار.
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"      # كل اثنين ٤ صباحاً UTC (٧ صباحاً بتوقيت الرياض)
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "نافذة الرصد بالأيام"
+        required: false
+        default: "45"
+
+permissions:
+  contents: write
+
+jobs:
+  news:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: رصد
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node news.mjs --days ${{ github.event.inputs.days || '45' }}
+
+      - name: فحص السجل شهرياً
+        continue-on-error: true    # تغيّر نطاق لا يوقف نشر الأخبار
+        run: node verify-regulators.mjs
+
+      - name: حفظ
+        run: |
+          git config user.name  "awares-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add public/data/news.json
+          git diff --staged --quiet && echo "لا جديد" && exit 0
+          git commit -m "مستجدات تنظيمية — $(date -u +%Y-%m-%d)"
+          git push

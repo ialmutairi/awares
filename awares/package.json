@@ -10,7 +10,8 @@
     "refresh": "node refresh.mjs",
     "test": "node test.mjs",
     "eval": "node eval.mjs",
-    "verify": "node verify-regulators.mjs"
+    "verify": "node verify-regulators.mjs",
+    "news": "node news.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

@@ -1,0 +1,67 @@
+rules_version = '2';
+
+// awares — قواعد أمان Firestore
+//
+// تُستخدم فقط في تركيبة GitHub Pages + Firebase، حيث يكتب المتصفح مباشرة
+// بلا خادم بينهما. المتصفح لا يُؤتمن، فالقواعد هنا هي الحارس الوحيد.
+//
+// النشر:  firebase deploy --only firestore:rules
+//
+// ملاحظة: مفتاح الويب (VITE_FIREBASE_KEY) عام بطبيعته ويظهر في الحزمة.
+// هذا مقصود في Firebase — الحماية بهذه القواعد لا بإخفاء المفتاح.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- التقييمات ----------
+    match /feedback/{id} {
+      allow read: if true;
+
+      allow create: if
+        // لا حقول خارج المتوقّع — يمنع حقن بيانات عشوائية
+        request.resource.data.keys().hasOnly(['rating','helpful','note','sector','at'])
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && (!('note' in request.resource.data) || request.resource.data.note.size() <= 500)
+        && (!('sector' in request.resource.data) || request.resource.data.sector.size() <= 60)
+        && (!('helpful' in request.resource.data) || request.resource.data.helpful is bool);
+
+      // لا تعديل ولا حذف — السجل ثابت بعد كتابته
+      allow update, delete: if false;
+    }
+
+    // ---------- المصادر المقترحة ----------
+    match /sources/{id} {
+      allow read: if true;
+
+      allow create: if
+        request.resource.data.keys().hasOnly(
+          ['sectorId','url','host','regulator','note','at','status','linkChecked']
+        )
+        && request.resource.data.url is string
+        && request.resource.data.url.size() <= 500
+        && request.resource.data.url.matches('^https://.*')
+        // المضيف لا بد أن ينتهي بنطاق رسمي — تكرار لفحص المتصفح،
+        // لأن من يكتب مباشرة إلى Firestore يستطيع تخطّي واجهتنا
+        && (
+             request.resource.data.host.matches('.*\\.gov\\.sa$')
+             || request.resource.data.host == 'gov.sa'
+             || request.resource.data.host in [
+                  'cma.org.sa','socpa.org.sa','sca.sa','scfhs.org.sa',
+                  'hrdf.org.sa','qiwa.sa'
+                ]
+           )
+        // لا يُسمح لأحد بترقية مقترحه إلى "معتمد"
+        && request.resource.data.status == 'pending'
+        && (!('note' in request.resource.data) || request.resource.data.note.size() <= 300);
+
+      allow update, delete: if false;
+    }
+
+    // كل ما عداهما مغلق
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
