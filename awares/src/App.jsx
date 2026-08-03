@@ -524,6 +524,73 @@ const STYLES = `
 .aw-msg-w { font-size: 11px; color: var(--ink-faint); }
 .aw-msg-b { font-size: 12.5px; color: var(--ink-soft); line-height: 1.75; }
 
+/* ============================================================
+   الطباعة / حفظ PDF
+
+   نعتمد طباعة المتصفح لا مكتبة PDF: مكتبات jsPDF وأمثالها تكسر تشكيل
+   الحروف العربية وتصلها خطأً أو تحوّلها صوراً غير قابلة للبحث. الطباعة
+   تُبقي النص عربياً سليماً ومنتقىً، وتضيف صفر بايت للحزمة.
+   ============================================================ */
+.aw-print-only { display: none; }
+
+@media print {
+  @page { size: A4; margin: 14mm 12mm 16mm; }
+
+  /* index.css يضبط height:100% وخلفية رمادية على html/body/#root،
+     فتمتد الخلفية على بقية الصفحة الأخيرة كصندوق فارغ. نبطلها هنا. */
+  html, body, #root { height: auto !important; background: #fff !important; }
+
+  .aw-root {
+    background: #fff; font-size: 10.5pt; padding-bottom: 0; min-height: 0;
+    /* ألوان مطبوعة: بلا هذا تُسقط المتصفحات الخلفيات فتضيع دلالة الحالة */
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .aw-wrap { max-width: none; padding: 0; }
+
+  /* كل ما لا معنى له على الورق */
+  .aw-top, .aw-ticker, .aw-tabs, .aw-flow, .aw-support, .aw-rate, .aw-wall,
+  .aw-filters, .aw-hints, .aw-actions, .aw-btn, .aw-q2, .aw-covsrc,
+  .aw-add, .aw-panel, .aw-nwbar, .aw-stamp { display: none !important; }
+
+  .aw-print-only { display: block; }
+
+  /* ترويسة التقرير */
+  .aw-ph { display: flex; align-items: center; gap: 12px; border-bottom: 2px solid #16365d; padding-bottom: 10px; margin-bottom: 14px; }
+  .aw-ph img { height: 44px; width: auto; }
+  .aw-ph-t { flex: 1; }
+  .aw-ph-n { font-family: 'Noto Kufi Arabic', sans-serif; font-weight: 700; font-size: 15pt; color: #16365d; }
+  .aw-ph-s { font-size: 9pt; color: #4a5058; margin-top: 2px; }
+
+  /* الخلاصة لا تُقطع. البطاقات تُقطع عند الحاجة: منعُ القطع فيها
+     يدفع كل بطاقة أطول من نصف صفحة إلى صفحة وحدها فتضيع نصف الورق. */
+  .aw-verdict, .aw-nw { break-inside: avoid; page-break-inside: avoid; }
+  .aw-card { box-shadow: none; orphans: 3; widows: 3; }
+  .aw-ctop, .aw-cagency, .aw-applies { break-after: avoid; page-break-after: avoid; }
+  .aw-row { break-inside: avoid; page-break-inside: avoid; }
+  .aw-card { margin-bottom: 8px; border: 1px solid #dcdfd7; }
+  .aw-agency, .aw-nwg { break-inside: auto; }
+  .aw-ahead, .aw-nwg-t { break-after: avoid; page-break-after: avoid; }
+
+  /* الروابط: نطبع العنوان نصاً وإلا صار «فتح المصدر الرسمي» بلا معنى على الورق */
+  .aw-src::after {
+    content: " — " attr(href);
+    font-family: 'IBM Plex Mono', monospace; font-size: 7.5pt;
+    color: #4a5058; word-break: break-all;
+  }
+  .aw-src { border-bottom: none; color: #0b5d4e; }
+
+  .aw-ledger { border: 1px solid #dcdfd7; }
+  .aw-bar { margin-bottom: 12px; }
+
+  /* التنبيه القانوني يجب أن يصل مع أي نسخة تُطبع أو تُشارك */
+  .aw-legal { border-top: 1px solid #16365d; margin-top: 14px; font-size: 8.5pt; }
+
+  .aw-pf {
+    font-size: 7.5pt; color: #878e97; text-align: center;
+    border-top: 1px solid #e9ebe5; padding-top: 5px; margin-top: 10px;
+  }
+}
+
 /* ---------- المخالفة بلغة مبسّطة ---------- */
 .aw-plain {
   font-size: 13.5px; color: var(--ink); background: var(--paper);
@@ -1010,8 +1077,32 @@ function Result({ result, onRestart }) {
     return c;
   }, [result]);
 
+  const when = new Date(result.generatedAt || Date.now()).toLocaleDateString("ar-SA", {
+    year: "numeric", month: "long", day: "numeric",
+  });
+
+  /* الطباعة تعطي «حفظ كـ PDF» في كل المتصفحات، وتُبقي العربية نصاً سليماً */
+  const savePdf = () => {
+    const prev = document.title;
+    // اسم الملف المقترح في حوار الحفظ يأتي من عنوان الصفحة
+    document.title = `awares — ${result.business?.label || "تقرير"} — ${when}`;
+    window.print();
+    setTimeout(() => { document.title = prev; }, 500);
+  };
+
   return (
     <>
+      {/* ترويسة تظهر في الورق فقط — النسخة المطبوعة تحتاج هوية وتاريخاً */}
+      <div className="aw-print-only aw-ph">
+        <img src={asset("/logo.png")} alt="awares" />
+        <div className="aw-ph-t">
+          <div className="aw-ph-n">تقرير الامتثال التنظيمي</div>
+          <div className="aw-ph-s">
+            {result.business?.label || "منشأة"} · {when} · awares.
+          </div>
+        </div>
+      </div>
+
       <div className="aw-verdict">
         <div className="aw-verdict-t">{result.business?.label || "منشأتك"} — الخلاصة</div>
         <div className="aw-verdict-s">{result.summary}</div>
@@ -1037,6 +1128,9 @@ function Result({ result, onRestart }) {
             ))}
         </div>
         <div className="aw-filters">
+          <button className="aw-f" onClick={savePdf} title="يفتح حوار الطباعة — اختر «حفظ كـ PDF»">
+            احفظ PDF
+          </button>
           <button className="aw-f" onClick={onRestart}>تحليل جديد</button>
         </div>
       </div>
@@ -1053,6 +1147,11 @@ function Result({ result, onRestart }) {
       <div className="aw-meta">
         تحليل آلي عبر بحث حيّ في المصادر الرسمية · المزوّد: {result.provider}
         {result.cached && " · نتيجة محفوظة لوصف مطابق — بلا استدعاء جديد"}
+      </div>
+
+      {/* تذييل الورق: من يقرأ نسخة مطبوعة لا يرى الموقع، فيحتاج مصدرها وتاريخها */}
+      <div className="aw-print-only aw-pf">
+        awares — الوعي والامتثال التنظيمي · {when} · معلومة استرشادية لا شهادة امتثال
       </div>
 
       <Rate sector={result.business?.label} />
